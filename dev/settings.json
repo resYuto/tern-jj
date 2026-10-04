@@ -1,0 +1,7 @@
+{
+  "shell": "/bin/zsh",
+  "plugins": true,
+  "native_surfaces": true,
+  "command_lenses": true,
+  "auto_update": false
+}

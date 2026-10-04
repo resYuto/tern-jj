@@ -1,0 +1,160 @@
+# tern-jj
+
+English | [日本語](README.ja.md)
+
+A Luau plugin development environment for adding Jujutsu support to Tern.
+Currently, it renders `jj status` and `jj st` output as native cards.
+It does not perform Jujutsu operations or replace Tern's existing Git UI.
+
+## Requirements
+
+- macOS, a desktop session, and access to a Tern account
+- Tern installed at `/Applications/Tern.app`
+- `mise`, `jj`, and Python 3 (for the smoke check)
+
+Verified with Tern 0.4.1, jj 0.45.1, and luau-lsp 1.70.1.
+If Tern is installed elsewhere, override its path, for example:
+`TERN=/path/to/tern mise run dev`.
+
+## Getting started
+
+```sh
+mise trust
+mise install github:JohnnyMorganz/luau-lsp@1.70.1
+mise run setup
+mise run check
+mise run dev
+```
+
+Tern executes Luau directly; no compilation or bundling is required.
+`check` performs static type checking, and `dev` launches Tern.
+Run `jj status` in the opened pane to display a "Jujutsu status" card.
+Errors, empty output, and output exceeding 5,000 lines remain in Raw view.
+Status commands with additional arguments, `jj log`, `jj diff`, and other
+commands are not captured by this lens and retain their normal output.
+
+## Editing and verification
+
+- `plugins/jj/host.luau`: host-side lens implementation; saving reloads it automatically.
+- `plugins/jj/plugin.toml`: declares the entry point and command patterns to capture.
+- `mise run reload`: manually reloads the development daemon's plugins; requires `dev` to be running.
+- `mise run smoke`: uses a temporary jj repository and an independent Tern window
+  to verify a clean working copy, an added file with spaces in its name, and
+  error output outside a repository. Stops the test window and daemon on exit.
+- Screenshot: `.dev/shots/live/jj-status.png`
+- Rendered element snapshot: `.dev/status-tree.json`
+- Development logs: `.dev/logs/`
+- Smoke check logs: `.dev/smoke-process.log` and `.dev/smoke-logs/`
+
+For VS Code, install the recommended **Luau Language Server** extension.
+`.vscode/settings.json` disables the Roblox environment and loads Tern's type definitions.
+Run `mise run types` to regenerate `tern.d.luau` from the installed Tern.
+This generated file is not tracked; regenerate it after updating Tern.
+`types/luau.d.luau` declares the nominal `userdata` base type missing from the
+standard environment so that Tern's `extern` types can be checked.
+It does not bypass type checking with `any`.
+
+## Isolation from the normal environment
+
+The `mise` tasks use:
+
+- Settings, plugin links, and plugin data: `.dev/config/`
+- Session daemon socket: `.dev/daemon.sock`
+- Window control socket: `.dev/control.sock`
+- zsh startup configuration: `dev/zsh/` (does not load personal rc files or aliases)
+
+`dev/settings.json` is copied to `.dev/config/settings.json` only on first setup.
+Existing development settings are not overwritten. Automatic updates are disabled
+in the development profile.
+Only the plugin package is linked, so changes to the SDK, logs, or `.jj` do not
+trigger plugin reloads.
+`tern-sdk/` is retained unchanged as the distributed SDK and examples.
+
+The development zsh profile uses the official shell integration cached by Tern.
+It sets `JJ_PAGER=cat` to prevent interactive pagers from aborting lens capture.
+Personal Jujutsu configuration files are not modified.
+
+## Loading in production (normal Tern)
+
+Use `install` rather than `link` to deploy a copy in production.
+This prevents edits saved during development from immediately affecting your
+normal Tern session.
+luau-lsp, Python, and the development zsh configuration are not required to run
+the plugin in production.
+
+### Initial installation
+
+Run this from the repository root. The subshell clears the development configuration,
+socket, and window overrides before installing into normal Tern.
+It does not change the parent shell's environment variables.
+
+```sh
+(
+  unset TERN_CONFIG_DIR TERN_DAEMON_SOCKET TERN_WINDOW_KEY TERN_WINDOW_SOCKET
+  /Applications/Tern.app/Contents/MacOS/tern plugin install "$PWD/plugins/jj" &&
+  /Applications/Tern.app/Contents/MacOS/tern plugin list
+)
+```
+
+On macOS, the installation directory is normally
+`~/Library/Application Support/Tern/plugins/jj/`.
+If the normal daemon is running, installation automatically reloads its plugins.
+If you see `no daemon running; changes apply at next start`, start normal Tern.
+In that case, `ready` in `list` only indicates a valid manifest; it does not
+confirm that the Lua code has run.
+
+If you previously used `link` in the normal environment, run `tern plugin unlink jj`
+in a subshell with the same environment overrides cleared before installing.
+Even `install --force` cannot replace a linked package.
+
+### Verifying loading and rendering
+
+In normal Tern, confirm that Jujutsu is Ready under Preferences › Plugins,
+that the plugin is enabled, and that Settings › Terminal › Native command output
+is enabled. In a pane with shell integration active, change to a jj repository
+and run:
+
+```sh
+JJ_PAGER=cat jj status
+```
+
+A "Jujutsu status" card confirms that the host-side plugin loaded and the lens works.
+The Raw toggle shows the original output. `JJ_PAGER=cat` is needed because capture
+is aborted when a pager enters interactive mode.
+To avoid specifying it for each command, you can add `export JJ_PAGER=cat` to your
+normal shell startup configuration, but this also selects `cat` as the pager for
+other jj commands. Personal shell configuration is not modified automatically.
+
+### Updating
+
+Editing the source does not update the installed copy.
+After type checking and the smoke check, explicitly replace it:
+
+```sh
+(
+  unset TERN_CONFIG_DIR TERN_DAEMON_SOCKET TERN_WINDOW_KEY TERN_WINDOW_SOCKET
+  /Applications/Tern.app/Contents/MacOS/tern plugin install "$PWD/plugins/jj" --force &&
+  /Applications/Tern.app/Contents/MacOS/tern plugin list
+)
+```
+
+### Disabling or removing
+
+Temporarily disable the plugin under Preferences › Plugins.
+To remove the installed copy, run the following. The development source is retained.
+
+```sh
+(
+  unset TERN_CONFIG_DIR TERN_DAEMON_SOCKET TERN_WINDOW_KEY TERN_WINDOW_SOCKET
+  /Applications/Tern.app/Contents/MacOS/tern plugin remove jj
+)
+```
+
+If you deployed with `link`, use `unlink jj` instead of `remove`.
+
+## Official documentation
+
+- [Getting Started](https://docs.stencil.so/tern/guides/getting-started.html)
+- [Command Lenses](https://docs.stencil.so/tern/guides/lenses.html)
+- [Debugging / control endpoint](https://docs.stencil.so/tern/guides/debugging.html)
+- [Plugin CLI](https://docs.stencil.so/tern/reference/cli.html)

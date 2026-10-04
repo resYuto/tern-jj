@@ -1,0 +1,9 @@
+{
+  "luau-lsp.platform.type": "standard",
+  "luau-lsp.sourcemap.enabled": false,
+  "luau-lsp.types.definitionFiles": {
+    "@luau": "types/luau.d.luau",
+    "@tern": "tern.d.luau"
+  },
+  "git.enabled": false
+}

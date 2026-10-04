@@ -1,0 +1,10 @@
+schema = 1
+id = "jj"
+name = "Jujutsu"
+version = "0.1.0"
+description = "Native Jujutsu status output."
+host = "host.luau"
+
+[[lenses]]
+id = "status"
+match = ["jj status", "jj st"]
