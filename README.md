@@ -56,7 +56,12 @@ It does not bypass type checking with `any`.
 
 ## Isolation from the normal environment
 
-The `mise` tasks use:
+Development environment variables are scoped to the `mise` tasks, not exported
+when mise activates this directory. Running `tern plugin install` from the repository
+therefore targets normal Tern. In an already-open shell, let the next mise prompt
+hook refresh the environment, or run `eval "$(mise hook-env -s zsh)"` for zsh.
+
+The tasks use:
 
 - Settings, plugin links, and plugin data: `.dev/config/`
 - Session daemon socket: `.dev/daemon.sock`
@@ -85,8 +90,8 @@ the plugin in production.
 
 ### Initial installation
 
-Run this from the repository root. The subshell clears the development configuration,
-socket, and window overrides before installing into normal Tern.
+Run this from the repository root. The subshell clears any inherited configuration,
+socket, and window overrides (for example, from a development Tern pane).
 It does not change the parent shell's environment variables.
 
 ```sh

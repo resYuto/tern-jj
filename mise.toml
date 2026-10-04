@@ -1,7 +1,7 @@
 [tools]
 "github:JohnnyMorganz/luau-lsp" = "1.70.1"
 
-[env]
+[task_templates.dev.env]
 TERN = "{{ get_env(name='TERN', default='/Applications/Tern.app/Contents/MacOS/tern') }}"
 TERN_CONFIG_DIR = "{{ config_root }}/.dev/config"
 TERN_DAEMON_SOCKET = "{{ config_root }}/.dev/daemon.sock"
@@ -10,10 +10,12 @@ STENCIL_LOG = "warn,stencil=info,tern::plugin=debug"
 ZDOTDIR = "{{ config_root }}/dev/zsh"
 
 [tasks.types]
+extends = "dev"
 description = "Generate API definitions from the installed Tern"
 run = '"$TERN" plugin types .'
 
 [tasks.setup]
+extends = "dev"
 description = "Link the plugin into the isolated development profile"
 depends = ["types"]
 run = [
@@ -23,20 +25,24 @@ run = [
 ]
 
 [tasks.check]
+extends = "dev"
 description = "Type-check the plugin, not the bundled examples"
 depends = ["types"]
 run = "luau-lsp analyze --platform=standard --definitions=@luau=types/luau.d.luau --definitions=@tern=tern.d.luau plugins/jj/host.luau"
 
 [tasks.dev]
+extends = "dev"
 description = "Open a development window with live reload and control endpoint"
 depends = ["setup", "check"]
 run = '"$TERN" --control "{{ config_root }}/.dev/control.sock" "{{ config_root }}"'
 
 [tasks.reload]
+extends = "dev"
 description = "Reload the development daemon plugins (requires mise run dev)"
 run = '"$TERN" plugin reload'
 
 [tasks.smoke]
+extends = "dev"
 description = "Exercise the status lens in a real Tern window (requires Python 3)"
 depends = ["setup", "check"]
 run = "python3 tests/smoke.py"
