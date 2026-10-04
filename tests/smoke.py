@@ -68,13 +68,36 @@ with tempfile.TemporaryDirectory(prefix="tern-jj-", dir="/tmp") as temporary:
             ctl('plugins expect "The working copy has no changes."')
             print("PASS: clean repository renders a native status card")
 
+            for name in ("modified.txt", "deleted.txt", "before.txt"):
+                (repo / name).write_text("original\n", encoding="utf-8")
+            subprocess.run(["jj", "new"], cwd=repo, env=env, check=True)
+            (repo / "modified.txt").write_text("modified\n", encoding="utf-8")
+            (repo / "deleted.txt").unlink()
+            (repo / "before.txt").rename(repo / "after.txt")
+
             (repo / "changed file.txt").write_text("Jujutsu smoke check\n", encoding="utf-8")
             ctl('run "jj st"')
             ctl('plugins expect "A changed file.txt"')
             tree = ctl("tree .sf-block[data-role='lens.plugin.jj.status']")
             (ARTIFACTS / "status-tree.json").write_text(json.dumps(tree, indent=2), encoding="utf-8")
+            for token, expected in (
+                ("success", "A changed file.txt"),
+                ("warning", "M modified.txt"),
+                ("warning", "R {before.txt => after.txt}"),
+                ("error", "D deleted.txt"),
+            ):
+                styled = ctl(f"tree .sf-block[data-role='lens.plugin.jj.status'] .sf-t-{token}")
+                assert any(node.get("text") == expected for node in styled["nodes"]), styled
+            status_output = subprocess.run(["jj", "status", "--color=never"], cwd=repo,
+                                           env=env, check=True, text=True, capture_output=True).stdout
+            for line in status_output.splitlines():
+                if line.startswith("Working copy") and "(@)" in line or line.startswith("Parent commit (@-)"):
+                    change, commit = line.split(":", 1)[1].split()[:2]
+                    for token, expected in (("accent", change), ("info", commit)):
+                        styled = ctl(f"tree .sf-block[data-role='lens.plugin.jj.status'] .sf-t-{token}")
+                        assert any(node.get("text") == expected for node in styled["nodes"]), styled
             ctl("shot jj-status")
-            print("PASS: jj st renders the added file, including spaces in its name")
+            print("PASS: added, modified, deleted, renamed files and commit IDs render styled text")
 
             ctl("tab new")
             ctl("ready")

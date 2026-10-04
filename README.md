@@ -29,6 +29,9 @@ mise run dev
 Tern executes Luau directly; no compilation or bundling is required.
 `check` performs static type checking, and `dev` launches Tern.
 Run `jj status` in the opened pane to display a "Jujutsu status" card.
+The card colors additions green, modifications/renames yellow, and deletions red.
+Change IDs use the accent color, commit IDs use the info color, and a clean
+working copy uses green. Colors follow the active Tern theme; unrecognized lines stay unchanged.
 Errors, empty output, and output exceeding 5,000 lines remain in Raw view.
 Status commands with additional arguments, `jj log`, `jj diff`, and other
 commands are not captured by this lens and retain their normal output.
@@ -39,8 +42,8 @@ commands are not captured by this lens and retain their normal output.
 - `plugins/jj/plugin.toml`: declares the entry point and command patterns to capture.
 - `mise run reload`: manually reloads the development daemon's plugins; requires `dev` to be running.
 - `mise run smoke`: uses a temporary jj repository and an independent Tern window
-  to verify a clean working copy, an added file with spaces in its name, and
-  error output outside a repository. Stops the test window and daemon on exit.
+  to verify clean output, added/modified/deleted/renamed file colors, change/commit
+  ID colors, and error output outside a repository. Stops the test window and daemon on exit.
 - Screenshot: `.dev/shots/live/jj-status.png`
 - Rendered element snapshot: `.dev/status-tree.json`
 - Development logs: `.dev/logs/`

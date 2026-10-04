@@ -25,9 +25,28 @@ local status: LensDef<State> = {
 			state.lines = nil -- Large output stays raw rather than being truncated.
 			return
 		end
-		local kind = string.match(line.text, "^([AMD]) ")
-		local tone = if kind == "A" then "success" elseif kind == "D" then "error" elseif kind == "M" then "warn" else nil
-		table.insert(lines, ui.text({ ui.span(line.text, tone) }))
+		local text = line.text
+		local kind = string.match(text, "^([AMDR]) ")
+		local tone = if kind == "A" then "success" elseif kind == "D" then "error" elseif kind then "warning" else nil
+		local label, change, commit, rest = string.match(text, "^(Working copy%s+%(@%)%s*:%s*)(%l+)(%s+%x+)(.*)$")
+		if not label then
+			label, change, commit, rest = string.match(text, "^(Parent commit %(@%-%)%s*:%s*)(%l+)(%s+%x+)(.*)$")
+		end
+		if label and change and commit and rest then
+			table.insert(lines, ui.text({
+				ui.span(label, "muted"),
+				ui.span(change, "accent"),
+				ui.span(commit, "info"),
+				ui.span(rest),
+			}))
+		else
+			if text == "The working copy has no changes." then
+				tone = "success"
+			elseif text == "Working copy changes:" then
+				tone = "strong"
+			end
+			table.insert(lines, ui.text({ ui.span(text, tone) }))
+		end
 	end,
 	finish = function(state, code)
 		state.status = code
