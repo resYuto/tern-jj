@@ -22,6 +22,7 @@ with tempfile.TemporaryDirectory(prefix="tern-jj-", dir="/tmp") as temporary:
                TERN_DAEMON_SOCKET=str(work / "daemon.sock"),
                STENCIL_LOG_DIR=str(ARTIFACTS / "smoke-logs"),
                ZDOTDIR=str(ROOT / "dev/zsh"))
+    env.pop("JJ_PAGER", None)
     subprocess.run(["jj", "git", "init", "--no-colocate", str(repo)], check=True, env=env)
     subprocess.run([TERN, "plugin", "link", str(ROOT / "plugins/jj")], check=True, env=env)
     control = str(work / "control.sock")
@@ -56,6 +57,11 @@ with tempfile.TemporaryDirectory(prefix="tern-jj-", dir="/tmp") as temporary:
             plugins = json.loads(catalog.stdout)
             assert not plugins["problems"], plugins
             assert any(p["id"] == "jj" and p["status"] == "ready" for p in plugins["plugins"]), plugins
+
+            ctl('run "test \\"$JJ_PAGER\\" = cat"')
+            ctl("ready")
+            state = ctl("state")
+            assert state["focused"]["last"]["status"] == 0, "New shell did not receive JJ_PAGER=cat"
 
             ctl('run "jj status"')
             ctl('plugins expect "Jujutsu status"')

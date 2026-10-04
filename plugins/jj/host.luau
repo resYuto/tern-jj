@@ -2,6 +2,11 @@
 
 local ui = tern.ui
 
+tern.on("spawn", function(spec: SpawnSpec): SpawnSpec
+	spec.env.JJ_PAGER = "cat"
+	return spec
+end)
+
 type State = {
 	lines: { Node }?,
 	status: number?,

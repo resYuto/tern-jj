@@ -71,8 +71,9 @@ trigger plugin reloads.
 `tern-sdk/` is retained unchanged as the distributed SDK and examples.
 
 The development zsh profile uses the official shell integration cached by Tern.
-It sets `JJ_PAGER=cat` to prevent interactive pagers from aborting lens capture.
-Personal Jujutsu configuration files are not modified.
+The plugin injects `JJ_PAGER=cat` when Tern spawns a new shell to prevent interactive
+pagers from aborting lens capture. Personal shell and Jujutsu configuration files
+are not modified.
 
 ## Loading in production (normal Tern)
 
@@ -111,19 +112,18 @@ Even `install --force` cannot replace a linked package.
 
 In normal Tern, confirm that Jujutsu is Ready under Preferences › Plugins,
 that the plugin is enabled, and that Settings › Terminal › Native command output
-is enabled. In a pane with shell integration active, change to a jj repository
-and run:
+is enabled. Open a new pane with shell integration active after loading the plugin,
+change to a jj repository and run:
 
 ```sh
-JJ_PAGER=cat jj status
+jj status
 ```
 
 A "Jujutsu status" card confirms that the host-side plugin loaded and the lens works.
-The Raw toggle shows the original output. `JJ_PAGER=cat` is needed because capture
-is aborted when a pager enters interactive mode.
-To avoid specifying it for each command, you can add `export JJ_PAGER=cat` to your
-normal shell startup configuration, but this also selects `cat` as the pager for
-other jj commands. Personal shell configuration is not modified automatically.
+The Raw toggle shows the original output. The plugin sets `JJ_PAGER=cat` for all jj
+commands in new panes, replacing any inherited value. Existing panes are unchanged;
+open a new pane after installing or reloading the plugin. Shell startup files or
+explicit command-local assignments can override the injected value.
 
 ### Updating
 
