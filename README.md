@@ -38,8 +38,8 @@ commands are not captured by this lens and retain their normal output.
 
 ## Editing and verification
 
-- `plugins/jj/host.luau`: host-side lens implementation; saving reloads it automatically.
-- `plugins/jj/plugin.toml`: declares the entry point and command patterns to capture.
+- `host.luau`: host-side lens implementation; saving reloads it automatically.
+- `plugin.toml`: declares the entry point and command patterns to capture.
 - `mise run reload`: manually reloads the development daemon's plugins; requires `dev` to be running.
 - `mise run smoke`: uses a temporary jj repository and an independent Tern window
   to verify clean output, added/modified/deleted/renamed file colors, change/commit
@@ -74,8 +74,7 @@ The tasks use:
 `dev/settings.json` is copied to `.dev/config/settings.json` only on first setup.
 Existing development settings are not overwritten. Automatic updates are disabled
 in the development profile.
-Only the plugin package is linked, so changes to the SDK, logs, or `.jj` do not
-trigger plugin reloads.
+The repository root is linked as the plugin package.
 `tern-sdk/` is retained unchanged as the distributed SDK and examples.
 
 The development zsh profile uses the official shell integration cached by Tern.
@@ -93,17 +92,20 @@ the plugin in production.
 
 ### Initial installation
 
-Run this from the repository root. The subshell clears any inherited configuration,
-socket, and window overrides (for example, from a development Tern pane).
+The subshell clears any inherited configuration, socket, and window overrides
+(for example, from a development Tern pane).
 It does not change the parent shell's environment variables.
 
 ```sh
 (
   unset TERN_CONFIG_DIR TERN_DAEMON_SOCKET TERN_WINDOW_KEY TERN_WINDOW_SOCKET
-  /Applications/Tern.app/Contents/MacOS/tern plugin install "$PWD/plugins/jj" &&
+  /Applications/Tern.app/Contents/MacOS/tern plugin install github.com/resYuto/tern-jj &&
   /Applications/Tern.app/Contents/MacOS/tern plugin list
 )
 ```
+
+GitHub installation requires `plugin.toml` and its entry point at the repository
+root. No local checkout is needed.
 
 On macOS, the installation directory is normally
 `~/Library/Application Support/Tern/plugins/jj/`.
@@ -135,13 +137,13 @@ explicit command-local assignments can override the injected value.
 
 ### Updating
 
-Editing the source does not update the installed copy.
-After type checking and the smoke check, explicitly replace it:
+Editing local source does not update the installed copy.
+After publishing the checked changes to GitHub, explicitly replace it:
 
 ```sh
 (
   unset TERN_CONFIG_DIR TERN_DAEMON_SOCKET TERN_WINDOW_KEY TERN_WINDOW_SOCKET
-  /Applications/Tern.app/Contents/MacOS/tern plugin install "$PWD/plugins/jj" --force &&
+  /Applications/Tern.app/Contents/MacOS/tern plugin install github.com/resYuto/tern-jj --force &&
   /Applications/Tern.app/Contents/MacOS/tern plugin list
 )
 ```

@@ -21,14 +21,14 @@ depends = ["types"]
 run = [
   'mkdir -p "$TERN_CONFIG_DIR" "$STENCIL_LOG_DIR"',
   'test -f "$TERN_CONFIG_DIR/settings.json" || cp dev/settings.json "$TERN_CONFIG_DIR/settings.json"',
-  '"$TERN" plugin link plugins/jj',
+  '"$TERN" plugin link .',
 ]
 
 [tasks.check]
 extends = "dev"
 description = "Type-check the plugin, not the bundled examples"
 depends = ["types"]
-run = "luau-lsp analyze --platform=standard --definitions=@luau=types/luau.d.luau --definitions=@tern=tern.d.luau plugins/jj/host.luau"
+run = "luau-lsp analyze --platform=standard --definitions=@luau=types/luau.d.luau --definitions=@tern=tern.d.luau host.luau"
 
 [tasks.dev]
 extends = "dev"

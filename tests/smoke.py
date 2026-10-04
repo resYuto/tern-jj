@@ -24,7 +24,11 @@ with tempfile.TemporaryDirectory(prefix="tern-jj-", dir="/tmp") as temporary:
                ZDOTDIR=str(ROOT / "dev/zsh"))
     env.pop("JJ_PAGER", None)
     subprocess.run(["jj", "git", "init", "--no-colocate", str(repo)], check=True, env=env)
-    subprocess.run([TERN, "plugin", "link", str(ROOT / "plugins/jj")], check=True, env=env)
+    package = work / "package"
+    package.mkdir()
+    for name in ("plugin.toml", "host.luau"):
+        (package / name).write_bytes((ROOT / name).read_bytes())
+    subprocess.run([TERN, "plugin", "install", str(package)], check=True, env=env)
     control = str(work / "control.sock")
 
     def ctl(command):

@@ -36,8 +36,8 @@ change ID はアクセント色、commit ID は情報色、変更なしのメッ
 
 ## 編集と確認
 
-- `plugins/jj/host.luau`: ホスト側のレンズ実装。保存すると自動再読み込み。
-- `plugins/jj/plugin.toml`: エントリーと取得するコマンドを宣言。
+- `host.luau`: ホスト側のレンズ実装。保存すると自動再読み込み。
+- `plugin.toml`: エントリーと取得するコマンドを宣言。
 - `mise run reload`: 開発デーモンを手動再読み込み。`dev` の起動が必要。
 - `mise run smoke`: 一時的な jj リポジトリと独立した Tern ウィンドウで、
   変更なし・追加／変更／削除／リネームの文字色・change/commit ID の文字色・リポジトリ外のエラー表示を確認。
@@ -70,7 +70,7 @@ Tern の `extern` 型を型検査できるようにします。`any` による�
 
 `dev/settings.json` は初回のみ `.dev/config/settings.json` にコピーします。
 既存の開発設定は上書きしません。自動アップデートは開発プロファイルでは無効です。
-プラグイン本体だけをリンクするため、SDK、ログ、`.jj` の更新では再読み込みしません。
+リポジトリのルートをプラグインとしてリンクします。
 `tern-sdk/` は配布 SDK とサンプルとして保持し、変更していません。
 
 開発用 zsh は Tern がキャッシュに配置する公式シェル連携を利用します。
@@ -86,17 +86,19 @@ luau-lsp、Python、開発用 zsh 設定は本番での実行には不要です�
 
 ### 初回インストール
 
-このリポジトリのルートで実行してください。サブシェル内で継承した設定・
-ソケット・ウィンドウ指定（開発用 Tern のペインなど）を解除します。
-親シェルの環境変数は変更しません。
+サブシェル内で継承した設定・ソケット・ウィンドウ指定
+（開発用 Tern のペインなど）を解除します。親シェルの環境変数は変更しません。
 
 ```sh
 (
   unset TERN_CONFIG_DIR TERN_DAEMON_SOCKET TERN_WINDOW_KEY TERN_WINDOW_SOCKET
-  /Applications/Tern.app/Contents/MacOS/tern plugin install "$PWD/plugins/jj" &&
+  /Applications/Tern.app/Contents/MacOS/tern plugin install github.com/resYuto/tern-jj &&
   /Applications/Tern.app/Contents/MacOS/tern plugin list
 )
 ```
+
+GitHub インストールはリポジトリ直下の `plugin.toml` とエントリーファイルを
+使用します。ローカルへの clone は不要です。
 
 macOS の配置先は通常 `~/Library/Application Support/Tern/plugins/jj/` です。
 通常のデーモンが起動中ならインストール時に自動再読み込みされます。
@@ -127,13 +129,13 @@ Raw 切り替えで元の出力も確認できます。プラグインは新し�
 
 ### 更新
 
-ソースの編集だけではインストール済みのコピーは更新されません。
-型検査・スモークチェック後に明示的に置き換えます。
+ローカルのソース編集だけではインストール済みのコピーは更新されません。
+型検査・スモークチェック後に GitHub へ公開してから、明示的に置き換えます。
 
 ```sh
 (
   unset TERN_CONFIG_DIR TERN_DAEMON_SOCKET TERN_WINDOW_KEY TERN_WINDOW_SOCKET
-  /Applications/Tern.app/Contents/MacOS/tern plugin install "$PWD/plugins/jj" --force &&
+  /Applications/Tern.app/Contents/MacOS/tern plugin install github.com/resYuto/tern-jj --force &&
   /Applications/Tern.app/Contents/MacOS/tern plugin list
 )
 ```
